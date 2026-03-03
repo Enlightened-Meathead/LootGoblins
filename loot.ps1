@@ -117,10 +117,10 @@ $Domain   = $env:USERDOMAIN
 
 Write-Host @"
 
-$([char]0x2554)$([char]0x2550 * 54)$([char]0x2557)
+$([char]0x2554)$([string][char]0x2550 * 54)$([char]0x2557)
 $([char]0x2551)    Invoke-Loot.ps1 - OSCP Edition (Full)      $([char]0x2551)
 $([char]0x2551)  Creds | AD | Cloud | Docker | Privesc | Logs $([char]0x2551)
-$([char]0x255A)$([char]0x2550 * 54)$([char]0x255D)
+$([char]0x255A)$([string][char]0x2550 * 54)$([char]0x255D)
 "@ -ForegroundColor Cyan
 
 Write-Info "Host:      $Hostname"
@@ -1406,9 +1406,9 @@ Write-OK "Total files:      $totalFiles"
 Write-OK "Total hits:       $totalHits"
 Write-OK "Loot directory:   $OutputDir"
 
-Write-Host "`n$([char]0x2554)$([char]0x2550 * 54)$([char]0x2557)" -ForegroundColor Magenta
+Write-Host "`n$([char]0x2554)$([string][char]0x2550 * 54)$([char]0x2557)" -ForegroundColor Magenta
 Write-Host "$([char]0x2551)              HITS SUMMARY                      $([char]0x2551)" -ForegroundColor Magenta
-Write-Host "$([char]0x255A)$([char]0x2550 * 54)$([char]0x255D)" -ForegroundColor Magenta
+Write-Host "$([char]0x255A)$([string][char]0x2550 * 54)$([char]0x255D)" -ForegroundColor Magenta
 Get-Content $hitsFile -ErrorAction SilentlyContinue | Write-Host -ForegroundColor Magenta
 
 Write-Host "`n=== Exfil Options ===" -ForegroundColor Yellow
