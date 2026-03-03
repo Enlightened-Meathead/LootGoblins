@@ -856,7 +856,7 @@ Invoke-Section "Network & Lateral Movement"
 $netDir = "$OutputDir\network"
 $null = New-Item -ItemType Directory -Path $netDir -Force
 
-{
+& {
     "=== IP Config ==="; ipconfig /all
     "=== Routing Table ==="; route print
     "=== ARP Cache ==="; arp -a
